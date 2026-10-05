@@ -1,0 +1,57 @@
+# Agent card catalog — loaded by internal/model (agent_card registry).
+version: 1
+
+agents:
+  - id: brand-agent
+    name: 品牌 Agent
+    description: >-
+      品牌海报与视觉资产工作流
+    version: "1.0.0"
+    mode: agent
+    package: movieagent/internal/service/agents/brandagent
+    entry: BrandAgent
+    aliases:
+      - brandagent
+      - 品牌agent
+      - 品牌 Agent
+    tags:
+      - document
+      - image
+      - video
+      - audio
+      - brand
+      - poster
+    provider:
+      organization: movieagent
+    capabilities:
+      streaming: true
+      sandbox: true
+      brand_assets: true
+    skills:
+      - id: poster-workflow
+        name: 海报工作流
+        description: >-
+          用户 prompt + 创意 → 出图入沙箱 → 品牌固定元素审美整合 → 前端展示
+        tags: [poster, image, brand]
+        examples:
+          - 为国庆节柠檬茶新品做一张竖版海报
+        input_modes: [text/plain, "image/*"]
+        output_modes: [image/png, text/markdown]
+      - id: brand-tone
+        name: 品牌调性
+        description: 注入品牌色与视觉资产，生成活动视觉
+        tags: [brand, image]
+        input_modes: [text/plain, "image/*"]
+        output_modes: [image/png, text/plain]
+    default_input_modes: [text/plain, "image/*", application/pdf]
+    default_output_modes: [text/plain, image/png, text/markdown]
+    documentation_url: skills/public/poster-workflow/SKILL.md
+    icon_url: /media/assets/brands/ningdao/logos/previews/logo.png
+    cover:
+      url: /media/assets/brands/ningdao/logos/previews/logo.png
+      alt: 品牌 Agent 封面
+      width: 512
+      height: 512
+      mime: image/png
+    extra:
+      skill: poster-workflow

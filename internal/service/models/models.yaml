@@ -1,0 +1,212 @@
+# Model catalog ported from linmu (model_cap registry + gemini/geminivideo + MovieAgent LLMs).
+# Each entry is registered by stable `id`; Lookup also resolves `aliases`.
+
+defaults:
+  gemini_base_url: https://generativelanguage.googleapis.com/v1beta
+  moark_base_url: https://ai.gitee.com
+  minimax_base_url: https://api.minimax.io
+  dashscope_base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  openai_base_url: https://api.openai.com/v1
+  sensenova_base_url: https://token.sensenova.cn/v1
+
+models:
+  # ---- text / LLM ----
+  - id: gemini-3.5-flash
+    tag: text
+    name: Gemini 3.5 Flash
+    provider: gemini
+    upstream: gemini-3.5-flash
+    base_url: ${defaults.gemini_base_url}
+    api_key_env: GEMINI_API_KEY
+    aliases: [gemini-3.5-flash-latest]
+
+  - id: gemini-2.5-flash
+    tag: text
+    name: Gemini 2.5 Flash
+    provider: gemini
+    upstream: gemini-2.5-flash
+    base_url: ${defaults.gemini_base_url}
+    api_key_env: GEMINI_API_KEY
+    aliases: [gemini 2.5 flash]
+
+  - id: qwen3.8-flash
+    tag: text
+    name: Qwen3.8 Flash
+    provider: moark
+    upstream: qwen3.8-flash
+    base_url: ${defaults.moark_base_url}
+    api_key_env: MOARK_API_KEY
+    aliases: [qwen3-flash, movieagent-llm]
+
+  - id: gpt4-o
+    tag: text
+    name: GPT-4o
+    provider: openai
+    upstream: gpt-4o-2024-08-06
+    base_url: ${defaults.openai_base_url}
+    api_key_env: OPENAI_API_KEY
+    aliases: [gpt-4o, gpt4o]
+
+  - id: deepseek-r1
+    tag: text
+    name: DeepSeek R1
+    provider: dashscope
+    upstream: deepseek-r1
+    base_url: ${defaults.dashscope_base_url}
+    api_key_env: OPENAI_API_KEY
+    aliases: [deepseek r1]
+
+  - id: deepseek-v3
+    tag: text
+    name: DeepSeek V3
+    provider: dashscope
+    upstream: deepseek-v3
+    base_url: ${defaults.dashscope_base_url}
+    api_key_env: OPENAI_API_KEY
+    aliases: [deepseek v3]
+
+  # ---- image ----
+  # Nano Banana Pro (default draw model for brand-tone coffee posters)
+  - id: gemini-3-pro-image
+    tag: image
+    name: Nano Banana Pro
+    provider: gemini
+    upstream: gemini-3-pro-image
+    base_url: ${defaults.gemini_base_url}
+    api_key_env: GEMINI_API_KEY
+    aliases:
+      - nano-banana-pro
+      - nano banana pro
+      - nanobanana-pro
+      - gemini-3-pro-image-preview
+      - gemini 3.0 pro image preview
+
+  - id: gemini-3-pro-image-preview
+    tag: image
+    name: Nano Banana Pro (preview)
+    provider: gemini
+    upstream: gemini-3-pro-image-preview
+    base_url: ${defaults.gemini_base_url}
+    api_key_env: GEMINI_API_KEY
+    aliases:
+      - nano-banana-pro-preview
+
+  - id: gemini-2.5-flash-image
+    tag: image
+    name: Gemini 2.5 Flash Image
+    provider: gemini
+    upstream: gemini-2.5-flash-image
+    base_url: ${defaults.gemini_base_url}
+    api_key_env: GEMINI_API_KEY
+    aliases:
+      - gemini-2.5-flash-image-preview
+      - gemini 2.5 flash image
+
+  - id: flux-2-klein
+    tag: image
+    name: FLUX.2 Klein
+    provider: moark
+    upstream: FLUX.2-klein-9B
+    base_url: ${defaults.moark_base_url}
+    api_key_env: MOARK_API_KEY
+    aliases:
+      - flux-2/klein
+      - flux-2-klein-9b
+      - klein
+      - flux.2 klein
+
+  - id: flux-2-klein-4b
+    tag: image
+    name: FLUX.2 Klein 4B
+    provider: moark
+    upstream: FLUX.2-klein-4B
+    base_url: ${defaults.moark_base_url}
+    api_key_env: MOARK_API_KEY
+    aliases:
+      - flux-2/klein-4b
+      - klein-4b
+      - flux.2 klein 4b
+
+  # SenseNova U1.5 Lite（文生图 / 图编辑，非对话模型）
+  # Docs: https://platform.sensenova.cn/docs
+  - id: sensenova-u1.5-lite
+    tag: image
+    name: SenseNova U1.5 Lite
+    provider: sensenova
+    upstream: sensenova-u1.5-lite
+    base_url: ${defaults.sensenova_base_url}
+    api_key_env: SENSENOVA_API_KEY
+    aliases:
+      - u15-lite
+      - u1.5-lite
+      - sensenova-u15-lite
+      - SenseNova U15 Lite
+      - SenseNova U1.5 Lite
+
+  # ---- video ----
+  - id: MiniMax-H3
+    tag: video
+    name: MiniMax H3
+    provider: minimax
+    upstream: MiniMax-H3
+    base_url: ${defaults.minimax_base_url}
+    api_key_env: MINIMAX_API_KEY
+    aliases:
+      - minimax h3
+      - minimax-h3
+      - minimax_h3
+
+  - id: gemini-omni-1.1-flash
+    tag: video
+    name: Gemini Omni Flash
+    provider: gemini
+    upstream: gemini-omni-1.1-flash
+    base_url: ${defaults.gemini_base_url}
+    api_key_env: GEMINI_API_KEY
+    aliases: [omni-flash, gemini omni flash]
+
+  - id: gemini-omni-flash-preview
+    tag: video
+    name: Gemini Omni Preview
+    provider: gemini
+    upstream: gemini-omni-flash-preview
+    base_url: ${defaults.gemini_base_url}
+    api_key_env: GEMINI_API_KEY
+    aliases: [omni-preview]
+
+  - id: veo-3.1-generate-preview
+    tag: video
+    name: Veo 3.1
+    provider: gemini
+    upstream: veo-3.1-generate-preview
+    base_url: ${defaults.gemini_base_url}
+    api_key_env: GEMINI_API_KEY
+    aliases: [veo-3.1, veo]
+
+  - id: veo-3.1-fast-generate-preview
+    tag: video
+    name: Veo 3.1 Fast
+    provider: gemini
+    upstream: veo-3.1-fast-generate-preview
+    base_url: ${defaults.gemini_base_url}
+    api_key_env: GEMINI_API_KEY
+    aliases: [veo-3.1-fast, veo-fast]
+
+  # ---- audio / TTS ----
+  - id: gemini-2.5-flash-preview-tts
+    tag: audio
+    name: Gemini 2.5 Flash TTS
+    provider: gemini
+    upstream: gemini-2.5-flash-preview-tts
+    base_url: ${defaults.gemini_base_url}
+    api_key_env: GEMINI_API_KEY
+    aliases: [gemini 2.5 flash tts]
+
+  - id: gemini-2.5-pro-preview-tts
+    tag: audio
+    name: Gemini 2.5 Pro TTS
+    provider: gemini
+    upstream: gemini-2.5-pro-preview-tts
+    base_url: ${defaults.gemini_base_url}
+    api_key_env: GEMINI_API_KEY
+    aliases: [gemini 2.5 pro tts]

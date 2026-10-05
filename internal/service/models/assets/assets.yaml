@@ -1,0 +1,105 @@
+# 全局品牌资产库
+# 供 agent / 大模型做品牌视觉与色彩注入；路径相对于项目资产根或绝对 URI。
+
+version: 1
+
+# 资产存储根（可选）。为空时各 path 按相对项目根或绝对路径解析。
+storage:
+  root: assets/brands
+  # 预览/缩略图默认子目录名
+  preview_dirname: previews
+  thumb_dirname: thumbs
+
+brands:
+  - id: ningdao
+    name: 茶抱抱
+    description: |
+      茶抱抱（TEA BEAR）是可爱风格的茶饮品牌。
+      Logo 为圆形抱奶茶的小熊，主色棕、奶茶橙与浅蓝云朵；节日海报需保留杯体主视觉，并自然融入该 Logo。
+    created_at: 2026-09-20T00:00:00Z
+    updated_at: 2026-09-21T00:00:00Z
+    visuals:
+      logo:
+        originals:
+          - path: logos/logo.png
+            format: png
+            preferred: true
+        preview:
+          path: logos/previews/logo.png
+          width: 1024
+          height: 1024
+        meta:
+          transparent_background: false
+          min_whitespace_ratio: 0.12
+          safe_margin_px: 36
+          safe_margin_ratio: 0.06
+      product_images: []
+    colors:
+      primary: "#5C3A2E"
+      secondary_1: "#E8A05A"
+      secondary_2: "#F6E6D4"
+      text: "#3D2A22"
+      background: "#FFFDF8"
+
+  - id: coffee-demo
+    # ---- 基础信息 ----
+    name: 日日咖
+    # 可选：注入到大模型 prompt 的品牌简介
+    description: |
+      日日咖是面向都市白领的咖啡饮品品牌。
+      视觉风格暗调、高对比、利落醒神，适合冰美式与拿铁等活动海报。
+    created_at: 2026-09-20T00:00:00Z
+    updated_at: 2026-09-20T00:00:00Z
+
+    # ---- 视觉资产 ----
+    visuals:
+      # Logo：优先 SVG，其次 AI / PDF
+      logo:
+        # 原始文件（按优先级排列；取第一个存在的）
+        originals:
+          - path: logos/logo.svg
+            format: svg
+            preferred: true
+          - path: logos/logo.ai
+            format: ai
+          - path: logos/logo.pdf
+            format: pdf
+        # 预览缩略图
+        preview:
+          path: logos/previews/logo.png
+          width: 512
+          height: 512
+        # 元数据
+        meta:
+          transparent_background: true
+          min_whitespace_ratio: 0.08
+          safe_margin_px: 24
+          safe_margin_ratio: 0.05
+
+      # 产品高清图集：多图
+      product_images:
+        - id: iced-americano-hero
+          path: products/iced-americano-hero.png
+          thumb:
+            path: products/thumbs/iced-americano-hero.jpg
+            width: 256
+            height: 256
+          tags: [冰美式, 饮品, 场景图]
+          alt: 冰美式主视觉
+
+        - id: coconut-latte-hero
+          path: products/coconut-latte-hero.png
+          thumb:
+            path: products/thumbs/coconut-latte-hero.jpg
+            width: 256
+            height: 256
+          tags: [生椰拿铁, 饮品, 场景图]
+          alt: 生椰拿铁主视觉
+
+    # ---- 色彩资产 ----
+    colors:
+      primary: "#1A120C"      # 主色（深咖）
+      secondary_1: "#C4A574"  # 辅助色1（烘焙金）
+      secondary_2: "#F5F0E8"  # 辅助色2（奶油白）
+      text: "#FFFFFF"         # 文字色
+      background: "#0E0B09"   # 背景色

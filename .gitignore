@@ -1,0 +1,39 @@
+# Binaries
+/bin/
+/dist/
+*.exe
+*.dll
+*.so
+*.dylib
+movieagent
+server
+
+# Test / coverage
+*.test
+*.out
+coverage.html
+
+# Go workspace
+vendor/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Studio uploads
+/assets/uploads/
+
+# Runtime / generated
+.deer-flow/
+/tmp/
+web/img/.DS_Store
+
+# JS deps
+node_modules/
