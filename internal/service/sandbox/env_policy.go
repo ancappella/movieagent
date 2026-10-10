@@ -41,9 +41,6 @@ var (
 		"GEMINI_BASE_URL",
 		"GEMINI_MODEL",
 		"GEMINI_HTTP_PROXY",
-		"SENSENOVA_API_KEY",
-		"SENSENOVA_BASE_URL",
-		"SENSENOVA_IMAGE_MODEL",
 	}
 	envNamePattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 )

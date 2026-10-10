@@ -80,8 +80,11 @@ func (h *StudioHandler) PromptRobotSession(c *gin.Context) {
 	}
 	body.Prompt = strings.TrimSpace(body.Prompt)
 	if body.Prompt == "" {
-		response.Fail(c, http.StatusBadRequest, 1, "prompt required")
-		return
+		if len(body.AssetIDs) == 0 && len(body.Elements) == 0 {
+			response.Fail(c, http.StatusBadRequest, 1, "prompt or assets required")
+			return
+		}
+		body.Prompt = "请根据参考素材生成"
 	}
 	skillID := strings.TrimSpace(body.Skill)
 	if skillID == "" {

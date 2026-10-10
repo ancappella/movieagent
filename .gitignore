@@ -37,3 +37,13 @@ web/img/.DS_Store
 
 # JS deps
 node_modules/
+
+# Python venvs (skill scripts)
+.venv/
+venv/
+
+# Playwright / Next local artifacts
+playwright-report/
+test-results/
+web/chat-ui/tmp/
+*.tsbuildinfo

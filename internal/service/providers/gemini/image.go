@@ -156,9 +156,12 @@ func NewImageService(cfg Config) *ImageService {
 
 func ResolveImageModel(raw string) string {
 	switch strings.ToLower(strings.TrimSpace(raw)) {
-	case "", "nano-banana-pro", "nano banana pro", "nanobanana-pro",
+	case "", "nano-banana", "nano banana", "nanobanana",
+		"nano-banana-pro", "nano banana pro", "nanobanana-pro",
 		"gemini-3-pro-image", "gemini-3-pro-image-preview", "gemini 3.0 pro image preview":
 		return ModelNanoBananaPro
+	case "nano-banana-flash", "gemini-2.5-flash-image", "gemini-2.5-flash-image-preview":
+		return "gemini-2.5-flash-image"
 	default:
 		return strings.TrimSpace(raw)
 	}

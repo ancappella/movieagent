@@ -15,6 +15,7 @@ import (
 	"movieagent/internal/service/config"
 	"movieagent/internal/service/herness"
 	"movieagent/internal/service/sandbox"
+	svctools "movieagent/internal/service/tools"
 )
 
 const (
@@ -182,6 +183,7 @@ func (a *BrandAgent) session(ctx context.Context, threadID string) (*session, er
 	userID := a.userID
 	tools := sandboxTools(sb)
 	tools = append(tools, generateImageTool(a.image, sb), imageResizeTool(sb), herness.AskClarificationTool{})
+	tools = append(tools, svctools.SessionTools(sb)...)
 
 	agent, err := herness.NewAgent(herness.Options{
 		Name:         a.name,
@@ -192,7 +194,7 @@ func (a *BrandAgent) session(ctx context.Context, threadID string) (*session, er
 		Features: &herness.Features{
 			Sandbox:       true,
 			LoopDetection: true,
-			BuiltinTools:  false, // sandbox + generate_image + image_resize; avoid echo noise
+			BuiltinTools:  false, // sandbox + generate_image + image_resize + registered tools
 		},
 		SandboxAcquire: func(_ context.Context, run *herness.RunConfig) (string, error) {
 			tid := run.ThreadID

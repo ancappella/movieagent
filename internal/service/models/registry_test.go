@@ -24,7 +24,6 @@ func TestLoadDefaultRegistersLinmuModels(t *testing.T) {
 		"gemini-2.5-flash-image",
 		"flux-2-klein",
 		"flux-2-klein-4b",
-		"sensenova-u1.5-lite",
 		"MiniMax-H3",
 		"gemini-omni-1.1-flash",
 		"gemini-omni-flash-preview",
@@ -68,15 +67,15 @@ func TestListByTag(t *testing.T) {
 	}
 
 	images := reg.List("image")
-	if len(images) != 6 {
-		t.Fatalf("image models = %d, want 6", len(images))
+	if len(images) != 5 {
+		t.Fatalf("image models = %d, want 5", len(images))
 	}
 
-	m, err := reg.Lookup("u15-lite")
+	m, err := reg.Lookup("nano-banana-pro")
 	if err != nil {
-		t.Fatalf("Lookup u15-lite: %v", err)
+		t.Fatalf("Lookup nano-banana-pro: %v", err)
 	}
-	if m.ID != "sensenova-u1.5-lite" || m.Provider != "sensenova" {
+	if m.ID != "gemini-3-pro-image" || m.Provider != "gemini" {
 		t.Fatalf("unexpected model: %#v", m)
 	}
 	texts := reg.List("text")

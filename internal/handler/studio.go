@@ -13,16 +13,16 @@ import (
 
 	appcfg "movieagent/internal/config"
 	"movieagent/internal/service/agent_loop"
-	"movieagent/internal/service/agents"
 	"movieagent/internal/service/agents/brandagent"
 	"movieagent/internal/service/assets"
 	svcconfig "movieagent/internal/service/config"
+	svctools "movieagent/internal/service/tools"
 	"movieagent/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
 
-// StudioHandler serves the asset upload + agent filter APIs.
+// StudioHandler serves asset upload, tasks, and robot session APIs.
 type StudioHandler struct {
 	ProjectRoot string
 	AssetsYAML  string
@@ -40,6 +40,9 @@ func NewStudioHandler(projectRoot, assetsYAML string) *StudioHandler {
 	}
 	// Ensure GEMINI_API_KEY from .env is in process env before BrandAgent / sandbox use it.
 	_ = appcfg.LoadDotEnv(filepath.Join(projectRoot, ".env"))
+
+	// Register local tools (picturebook_illustrate, …) at service startup.
+	svctools.Bootstrap(projectRoot, os.Getenv("PICTUREBOOK_PYTHON"))
 
 	paths := svcconfig.GetPaths()
 	ba, err := brandagent.New(brandagent.Options{
@@ -59,54 +62,6 @@ func NewStudioHandler(projectRoot, assetsYAML string) *StudioHandler {
 		Paths:       paths,
 		Sessions:    agent_loop.NewHub(),
 	}
-}
-
-func (h *StudioHandler) ListAgents(c *gin.Context) {
-	mode := strings.TrimSpace(c.Query("mode"))
-	tag := strings.TrimSpace(c.Query("tag"))
-	q := strings.TrimSpace(c.Query("q"))
-	var list []agents.Info
-	if q != "" {
-		list = agents.Search(q)
-		if mode != "" || tag != "" {
-			filtered := list[:0]
-			for _, a := range list {
-				if mode != "" && a.Mode != mode {
-					continue
-				}
-				if tag != "" && !containsTag(a.Tags, tag) {
-					continue
-				}
-				filtered = append(filtered, a)
-			}
-			list = filtered
-		}
-	} else {
-		list = agents.Filter(mode, tag)
-	}
-	response.OK(c, gin.H{
-		"agents": list,
-		"modes":  []string{"agent", "ask"},
-		"tags":   []string{"document", "image", "video", "audio", "brand", "poster", "script"},
-	})
-}
-
-func containsTag(tags []string, want string) bool {
-	for _, t := range tags {
-		if t == want {
-			return true
-		}
-	}
-	return false
-}
-
-func (h *StudioHandler) ListBrands(c *gin.Context) {
-	cat, err := assets.LoadCatalog(h.AssetsYAML)
-	if err != nil {
-		response.Fail(c, http.StatusInternalServerError, 1, err.Error())
-		return
-	}
-	response.OK(c, gin.H{"brands": cat.Summaries()})
 }
 
 func (h *StudioHandler) UploadAsset(c *gin.Context) {
@@ -233,6 +188,7 @@ func (h *StudioHandler) executeBrandPoster(ctx context.Context, prompt, brandID 
 		Elements:       posterElements,
 		BrandID:        brandID,
 		OnNode:         onNode,
+		RequireGemini:  true,
 	}
 	if brandID != "" {
 		if cat, cerr := assets.LoadCatalog(h.AssetsYAML); cerr == nil {
@@ -266,10 +222,14 @@ func (h *StudioHandler) executeBrandPoster(ctx context.Context, prompt, brandID 
 		}
 	}
 
-	msg := "海报已生成：创意 → 出图 → 沙箱"
+	msg := "已提交生成这组画面，等出图后你确认一下细节和氛围，没问题就可以继续往下做。"
 	if res.CompositePath != "" {
-		msg = "海报已生成：创意 → 出图 → 品牌元素整合 → 沙箱"
+		msg = "已提交生成这组画面（含品牌元素整合），等出图后你确认一下细节和氛围，没问题就可以继续往下做。"
 	}
+
+	imageURL := sandboxFileURL(threadID, res.OutputPath)
+	renderURL := sandboxFileURL(threadID, res.RenderPath)
+	imageURLs := uniqueImageURLs(renderURL, imageURL)
 
 	payload := gin.H{
 		"accepted":       true,
@@ -287,11 +247,18 @@ func (h *StudioHandler) executeBrandPoster(ctx context.Context, prompt, brandID 
 		"output_path":    res.OutputPath,
 		"render_path":    res.RenderPath,
 		"composite_path": res.CompositePath,
-		"image_url":      sandboxFileURL(threadID, res.OutputPath),
+		"image_url":      imageURL,
+		"render_url":     renderURL,
+		"image_urls":     imageURLs,
 		"creative_url":   sandboxFileURL(threadID, res.CreativePath),
 		"creative_text":  creativeText,
 		"bytes":          res.Bytes,
 		"message":        msg,
+		"suggestions": []string{
+			"把这组画面做成动态短视频",
+			"再生成一版同风格画面",
+			"给画面加更有氛围的场景背景",
+		},
 	}
 	return res, payload, nil
 }
@@ -332,12 +299,21 @@ func (h *StudioHandler) loadPosterElements(in []taskElement) ([]brandagent.Poste
 			if err != nil {
 				return nil, err
 			}
+			ext := strings.ToLower(filepath.Ext(path))
+			switch ext {
+			case ".mp4", ".mov", ".webm", ".m4v", ".avi", ".mkv":
+				if item.Note == "" {
+					item.Note = "参考视频 " + filepath.Base(path)
+				}
+				out = append(out, item)
+				continue
+			}
 			data, err := os.ReadFile(path)
 			if err != nil {
 				return nil, err
 			}
 			item.Image = data
-			item.MIME = mimeForExt(filepath.Ext(path))
+			item.MIME = mimeForExt(ext)
 		}
 		if len(item.Image) == 0 && item.Note == "" {
 			continue
@@ -361,10 +337,30 @@ func mimeForExt(ext string) string {
 }
 
 func sandboxFileURL(threadID, virtualPath string) string {
+	if strings.TrimSpace(threadID) == "" || strings.TrimSpace(virtualPath) == "" {
+		return ""
+	}
 	q := url.Values{}
 	q.Set("thread_id", threadID)
 	q.Set("path", virtualPath)
 	return "/api/v1/sandbox/file?" + q.Encode()
+}
+
+func uniqueImageURLs(urls ...string) []string {
+	out := make([]string, 0, len(urls))
+	seen := map[string]struct{}{}
+	for _, u := range urls {
+		u = strings.TrimSpace(u)
+		if u == "" {
+			continue
+		}
+		if _, ok := seen[u]; ok {
+			continue
+		}
+		seen[u] = struct{}{}
+		out = append(out, u)
+	}
+	return out
 }
 
 // ServeSandboxFile streams a LocalSandbox virtual path for the given thread.

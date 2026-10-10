@@ -22,6 +22,23 @@ go run ./cmd/server
 curl http://127.0.0.1:8080/api/v1/health
 ```
 
+## Nano Banana 文生图
+
+默认画图模型：`DRAW_MODEL=nano-banana-pro`（Gemini 3 Pro Image）。
+
+```bash
+# CLI
+go run ./cmd/nanobanana -p "柠檬茶海报，无文字" -o tmp/nano-banana.png
+
+# HTTP（ReAct / 前端可调用）
+curl -X POST http://127.0.0.1:8080/api/v1/images/generate \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"A lemon tea poster, no text","aspect_ratio":"3:4","image_size":"1K"}'
+# 结果图：/media/generated/<file>.png
+```
+
+品牌 Agent 的 ReAct 工具 `generate_image` 同样走 Nano Banana Pro。
+
 ## 目录结构
 
 ```text

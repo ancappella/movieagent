@@ -3,7 +3,6 @@ package brandagent
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"fmt"
 	"image"
 	"image/color"
@@ -14,7 +13,6 @@ import (
 	"strings"
 
 	"movieagent/internal/service/providers/gemini"
-	"movieagent/internal/service/providers/sensenova"
 	"movieagent/internal/service/sandbox"
 )
 
@@ -135,122 +133,23 @@ func (s *NanoBananaProImage) Generate(ctx context.Context, req GenerateRequest) 
 	return normalizeToPNG(out.Data, out.MIME)
 }
 
-// SenseNovaImage wraps SenseNova U1.5 Lite (fallback).
-type SenseNovaImage struct {
-	Service *sensenova.Service
-	Size    string
-}
-
-func NewSenseNovaImageFromEnv() (*SenseNovaImage, error) {
-	svc := sensenova.New(sensenova.Config{})
-	if svc == nil {
-		return nil, sensenova.ErrNotConfigured
-	}
-	return &SenseNovaImage{Service: svc, Size: sensenova.DefaultSize}, nil
-}
-
-func (s *SenseNovaImage) Generate(ctx context.Context, req GenerateRequest) ([]byte, error) {
-	if s == nil || s.Service == nil {
-		return nil, sensenova.ErrNotConfigured
-	}
-	size := s.Size
-	if size == "" {
-		size = sensenova.DefaultSize
-	}
-	noWatermark := false
-	extend := true
-	var (
-		out *sensenova.GenerateOutput
-		err error
-	)
-	if len(req.RefImage) > 0 {
-		mime := req.RefMIME
-		if mime == "" {
-			mime = sniffMIME(req.RefImage)
-		}
-		dataURL := "data:" + mime + ";base64," + base64.StdEncoding.EncodeToString(req.RefImage)
-		out, err = s.Service.Edit(ctx, sensenova.EditInput{
-			Prompt:         req.Prompt,
-			ImageURL:       dataURL,
-			Size:           size,
-			ResponseFormat: "b64_json",
-			OutputFormat:   "png",
-			Watermark:      &noWatermark,
-		})
-	} else {
-		out, err = s.Service.Generate(ctx, sensenova.GenerateInput{
-			Prompt:         req.Prompt,
-			Size:           size,
-			ResponseFormat: "b64_json",
-			OutputFormat:   "png",
-			Watermark:      &noWatermark,
-			PromptExtend:   &extend,
-		})
-	}
-	if err != nil {
-		return nil, err
-	}
-	if len(out.Data) == 0 {
-		return nil, sensenova.ErrEmptyImage
-	}
-	cleaned, err := stripCornerWatermark(out.Data)
-	if err != nil {
-		return out.Data, nil
-	}
-	return cleaned, nil
-}
-
-// DefaultImageGenerator prefers Nano Banana Pro, then SenseNova, then placeholder.
+// DefaultImageGenerator returns Gemini Nano Banana Pro when GEMINI_API_KEY is set;
+// otherwise a local placeholder (tests / offline).
 func DefaultImageGenerator() ImageGenerator {
-	var chain []ImageGenerator
 	if os.Getenv(gemini.APIKeyEnv) != "" {
 		if img, err := NewNanoBananaProFromEnv(); err == nil {
-			chain = append(chain, img)
+			return img
 		}
 	}
-	if os.Getenv(sensenova.APIKeyEnv) != "" {
-		if img, err := NewSenseNovaImageFromEnv(); err == nil {
-			chain = append(chain, img)
-		}
-	}
-	if len(chain) == 0 {
-		return PlaceholderImage{}
-	}
-	if len(chain) == 1 {
-		return chain[0]
-	}
-	return FallbackImage{Generators: chain}
+	return PlaceholderImage{}
 }
 
-// MustGeminiImageGenerator returns Nano Banana Pro only (no SenseNova fallback).
+// MustGeminiImageGenerator returns Nano Banana Pro or an error if Gemini is not configured.
 func MustGeminiImageGenerator() (ImageGenerator, error) {
 	if os.Getenv(gemini.APIKeyEnv) == "" {
 		return nil, gemini.ErrNotConfigured
 	}
 	return NewNanoBananaProFromEnv()
-}
-
-// FallbackImage tries generators in order until one succeeds.
-type FallbackImage struct {
-	Generators []ImageGenerator
-}
-
-func (f FallbackImage) Generate(ctx context.Context, req GenerateRequest) ([]byte, error) {
-	var last error
-	for _, g := range f.Generators {
-		if g == nil {
-			continue
-		}
-		out, err := g.Generate(ctx, req)
-		if err == nil && len(out) > 0 {
-			return out, nil
-		}
-		last = err
-	}
-	if last != nil {
-		return nil, last
-	}
-	return nil, fmt.Errorf("no image generator available")
 }
 
 func sniffMIME(data []byte) string {
@@ -339,73 +238,3 @@ func resolveHostPath(ls *sandbox.LocalSandbox, virtual string) (string, error) {
 	return filepath.Join(best.LocalPath, filepath.FromSlash(rel)), nil
 }
 
-func stripCornerWatermark(data []byte) ([]byte, error) {
-	src, err := png.Decode(bytes.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-	b := src.Bounds()
-	w, h := b.Dx(), b.Dy()
-	if w < 64 || h < 64 {
-		return data, nil
-	}
-	out := image.NewRGBA(b)
-	for y := b.Min.Y; y < b.Max.Y; y++ {
-		for x := b.Min.X; x < b.Max.X; x++ {
-			out.Set(x, y, src.At(x, y))
-		}
-	}
-	x0 := b.Min.X + int(float64(w)*0.72)
-	y0 := b.Min.Y + int(float64(h)*0.90)
-	sampleY := y0 - max(8, h/40)
-	if sampleY < b.Min.Y {
-		sampleY = b.Min.Y
-	}
-	fill := averageRGBA(src, x0, b.Max.X, sampleY, sampleY+max(4, h/80))
-	for y := y0; y < b.Max.Y; y++ {
-		for x := x0; x < b.Max.X; x++ {
-			out.Set(x, y, fill)
-		}
-	}
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, out); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-func averageRGBA(img image.Image, x0, x1, y0, y1 int) color.RGBA {
-	b := img.Bounds()
-	if x0 < b.Min.X {
-		x0 = b.Min.X
-	}
-	if y0 < b.Min.Y {
-		y0 = b.Min.Y
-	}
-	if x1 > b.Max.X {
-		x1 = b.Max.X
-	}
-	if y1 > b.Max.Y {
-		y1 = b.Max.Y
-	}
-	var r, g, bl, a, n uint64
-	for y := y0; y < y1; y++ {
-		for x := x0; x < x1; x++ {
-			rr, gg, bb, aa := img.At(x, y).RGBA()
-			r += uint64(rr >> 8)
-			g += uint64(gg >> 8)
-			bl += uint64(bb >> 8)
-			a += uint64(aa >> 8)
-			n++
-		}
-	}
-	if n == 0 {
-		return color.RGBA{R: 255, G: 255, B: 255, A: 255}
-	}
-	return color.RGBA{
-		R: uint8(r / n),
-		G: uint8(g / n),
-		B: uint8(bl / n),
-		A: uint8(a / n),
-	}
-}

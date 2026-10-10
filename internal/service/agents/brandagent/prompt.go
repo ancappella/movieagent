@@ -16,7 +16,9 @@ func defaultSystemPrompt() string {
 5. generate_image：prompt + ref_image_path，默认 Nano Banana Pro，输出 /mnt/user-data/outputs/brand-campaign.png。
 6. 需要指定尺寸时用 image_resize：image_path + width + height，默认输出 /mnt/user-data/outputs/resized.png。
 7. 品牌固定元素整合：注入品牌 Logo + 品牌色，审美融合进海报，输出 /mnt/user-data/outputs/brand-campaign-final.png。
-8. 回复输出路径与创意简报；不要只交 Prompt。
+8. 儿童绘本水彩彩铅插画用 picturebook_illustrate（Canvas 2D 绘制，不用 SD/LoRA），用 aspect_ratio 选尺寸（1:1/3:4/4:3/16:9/9:16/2:3/21:9），默认 2:3，输出 /mnt/user-data/outputs/picturebook.png。
+9. 插画短动画用 picturebook_animate：模型写含 draw(t) 的 Canvas JS → Playwright 逐帧 → ffmpeg MP4；可选 image_path 默认 /mnt/user-data/outputs/picturebook.png，输出 /mnt/user-data/outputs/picturebook.mp4；无 code 时 template 可用 character_spin / character_idle。
+10. 回复输出路径与创意简报；不要只交 Prompt。
 
 缺饮料图或节日/策略时用 ask_clarification。`
 }

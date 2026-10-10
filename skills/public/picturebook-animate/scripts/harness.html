@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <script>
+      (function () {
+        const params = new URLSearchParams(location.search);
+        const W = Math.max(2, parseInt(params.get("w") || "512", 10) || 512);
+        const H = Math.max(2, parseInt(params.get("h") || "768", 10) || 768);
+        const assetURL = params.get("asset") || "";
+        const canvas = document.getElementById("c");
+        canvas.width = W % 2 === 0 ? W : W + 1;
+        canvas.height = H % 2 === 0 ? H : H + 1;
+        const ctx = canvas.getContext("2d", { alpha: false });
+        window.__MA = {
+          canvas,
+          ctx,
+          width: canvas.width,
+          height: canvas.height,
+          assets: { image: null, imageURL: assetURL },
+          ready: false,
+          error: null,
+        };
+      })();
+    </script>
+    <!-- LLM / skill animation program (must define draw) -->
+    <script src="./animation.js"></script>
+    <script>
+      (async function boot() {
+        const MA = window.__MA;
+        const { canvas, ctx, width, height, assets } = MA;
+        try {
+          if (assets.imageURL) {
+            const img = new Image();
+            img.src = assets.imageURL;
+            await img.decode();
+            assets.image = img;
+          }
+          if (typeof window.setup === "function") {
+            await window.setup({ canvas, ctx, width, height, assets });
+          }
+          const userDraw = window.draw;
+          const userSeek = typeof window.seek === "function" ? window.seek : null;
+          if (typeof userDraw !== "function") {
+            throw new Error("animation.js must define function draw(t, ctx, canvas, assets)");
+          }
+          window.__maFrame = function (t) {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, width, height);
+            if (userSeek) userSeek(t);
+            userDraw(t, ctx, canvas, assets);
+          };
+          // Warm first frame so fonts/images settle.
+          window.__maFrame(0);
+          MA.ready = true;
+        } catch (err) {
+          MA.error = String(err && err.message ? err.message : err);
+          MA.ready = false;
+        }
+      })();
+    </script>
+  </body>
+</html>

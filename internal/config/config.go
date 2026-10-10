@@ -24,19 +24,26 @@ type Config struct {
 	DefaultImageModel string
 	DefaultVideoModel string
 
-	// Provider credentials / endpoints (from linmu + SenseNova)
-	GeminiKey     string
-	GeminiBase    string
-	MoarkKey      string
-	MoarkBase     string
-	MinimaxKey    string
-	MinimaxBase   string
-	OpenAIKey     string
-	SenseNovaKey  string
-	SenseNovaBase string
+	// Provider credentials / endpoints
+	GeminiKey   string
+	GeminiBase  string
+	MoarkKey    string
+	MoarkBase   string
+	MinimaxKey  string
+	MinimaxBase string
+	OpenAIKey   string
+	DeepSeekKey string
+	DeepSeekBase string
+	DeepSeekModel string
 
 	VoicePython  string
 	WhisperModel string
+
+	// Dispatch concurrency (defaults to 3).
+	DispatchMaxTasks int
+	DispatchMaxLLM   int
+	DispatchMaxTool  int
+	DispatchMaxSkill int
 }
 
 func Load() Config {
@@ -62,11 +69,17 @@ func Load() Config {
 		MinimaxKey:    firstEnv("MINIMAX_API_KEY", "MINIMAX_H3_API_KEY"),
 		MinimaxBase:   getEnv("MINIMAX_BASE_URL", "https://api.minimax.io"),
 		OpenAIKey:     os.Getenv("OPENAI_API_KEY"),
-		SenseNovaKey:  os.Getenv("SENSENOVA_API_KEY"),
-		SenseNovaBase: getEnv("SENSENOVA_BASE_URL", "https://token.sensenova.cn/v1"),
+		DeepSeekKey:   firstEnv("DEEPSEEK_API_KEY", "OPENAI_API_KEY"),
+		DeepSeekBase:  getEnv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
+		DeepSeekModel: getEnv("DEEPSEEK_MODEL", "deepseek-chat"),
 
 		VoicePython:  getEnv("VOICE_PYTHON", ""),
 		WhisperModel: getEnv("WHISPER_MODEL", "tiny"),
+
+		DispatchMaxTasks: getEnvAsInt("DISPATCH_MAX_TASKS", 3),
+		DispatchMaxLLM:   getEnvAsInt("DISPATCH_MAX_LLM", 3),
+		DispatchMaxTool:  getEnvAsInt("DISPATCH_MAX_TOOL", 3),
+		DispatchMaxSkill: getEnvAsInt("DISPATCH_MAX_SKILL", 3),
 	}
 }
 

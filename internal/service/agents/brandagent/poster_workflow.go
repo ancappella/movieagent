@@ -43,7 +43,7 @@ type PosterWorkflowRequest struct {
 	// OnNode is called when a workflow node starts (Status=run) or finishes.
 	OnNode func(WorkflowNode)
 
-	// RequireGemini disables heuristic / SenseNova fallbacks. Fail if Gemini errors.
+	// RequireGemini disables heuristic fallbacks. Fail if Gemini errors.
 	RequireGemini bool
 }
 

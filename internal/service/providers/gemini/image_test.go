@@ -68,10 +68,13 @@ func TestGenerateNanoBananaPro(t *testing.T) {
 }
 
 func TestResolveImageModel(t *testing.T) {
-	for _, raw := range []string{"nano-banana-pro", "Nano Banana Pro", "gemini-3-pro-image-preview"} {
+	for _, raw := range []string{"nano-banana", "nano-banana-pro", "Nano Banana Pro", "gemini-3-pro-image-preview"} {
 		if got := gemini.ResolveImageModel(raw); got != gemini.ModelNanoBananaPro {
 			t.Fatalf("ResolveImageModel(%q) = %q", raw, got)
 		}
+	}
+	if got := gemini.ResolveImageModel("gemini-2.5-flash-image"); got != "gemini-2.5-flash-image" {
+		t.Fatalf("flash image model = %q", got)
 	}
 }
 
